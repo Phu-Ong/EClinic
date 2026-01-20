@@ -9,17 +9,17 @@ using SKCDExtCtrl.GridFilters;
 
 namespace EchoAdmin
 {
-	// Token: 0x02000002 RID: 2
+	// Token: 0x02000007 RID: 7
 	public partial class TimKetQuaSieuAm : Form
 	{
-		// Token: 0x06000003 RID: 3 RVA: 0x00002418 File Offset: 0x00001418
+		// Token: 0x0600004D RID: 77 RVA: 0x0000AC20 File Offset: 0x00009C20
 		public TimKetQuaSieuAm()
 		{
 			this.InitializeComponent();
 			this.dataGridView1.DoubleClick += this.dataGridView1_DoubleClick;
 		}
 
-		// Token: 0x06000004 RID: 4 RVA: 0x000024A4 File Offset: 0x000014A4
+		// Token: 0x0600004E RID: 78 RVA: 0x0000ACAC File Offset: 0x00009CAC
 		public TimKetQuaSieuAm(DataSet ds)
 		{
 			this.InitializeComponent();
@@ -27,7 +27,7 @@ namespace EchoAdmin
 			this._dsSearch = ds;
 		}
 
-		// Token: 0x06000005 RID: 5 RVA: 0x00002538 File Offset: 0x00001538
+		// Token: 0x0600004F RID: 79 RVA: 0x0000AD40 File Offset: 0x00009D40
 		private void TimKetQuaSieuAm_Load(object sender, EventArgs e)
 		{
 			this.dataGridView1.DataSource = this._dsSearch.Tables[0];
@@ -37,22 +37,25 @@ namespace EchoAdmin
 			this.dataGridView1.Columns["YeuCauChiTiet_Id"].Visible = false;
 		}
 
-		// Token: 0x06000006 RID: 6 RVA: 0x000025D4 File Offset: 0x000015D4
+		// Token: 0x06000050 RID: 80 RVA: 0x0000ADDC File Offset: 0x00009DDC
 		private void dataGridView1_DoubleClick(object sender, EventArgs e)
 		{
-			if (this.dataGridView1.SelectedRows.Count > 0)
+			bool flag = this.dataGridView1.SelectedRows.Count > 0;
+			if (flag)
 			{
 				this.buttonOK.PerformClick();
 			}
 		}
 
-		// Token: 0x06000007 RID: 7 RVA: 0x0000260C File Offset: 0x0000160C
+		// Token: 0x06000051 RID: 81 RVA: 0x0000AE10 File Offset: 0x00009E10
 		private void buttonOK_Click(object sender, EventArgs e)
 		{
-			if (this.dataGridView1.SelectedCells[0].RowIndex >= 0)
+			bool flag = this.dataGridView1.SelectedCells[0].RowIndex >= 0;
+			if (flag)
 			{
 				this._iRow = this.dataGridView1.SelectedCells[1].RowIndex;
-				if (this._columnMember != string.Empty)
+				bool flag2 = this._columnMember != string.Empty;
+				if (flag2)
 				{
 					this._sValue = this.dataGridView1[this._columnMember, this._iRow].Value.ToString();
 				}
@@ -63,13 +66,17 @@ namespace EchoAdmin
 				this.key_id = (int)this.dataGridView1[0, this._iRow].Value;
 				base.Close();
 			}
-			else if (MessageBox.Show("Bạn chưa chọn dòng dữ liệu", "Chú ý", MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation) == DialogResult.OK)
+			else
 			{
-				base.Close();
+				bool flag3 = MessageBox.Show("Bạn chưa chọn dòng dữ liệu", "Chú ý", MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation) == DialogResult.OK;
+				if (flag3)
+				{
+					base.Close();
+				}
 			}
 		}
 
-		// Token: 0x06000008 RID: 8 RVA: 0x00002710 File Offset: 0x00001710
+		// Token: 0x06000052 RID: 82 RVA: 0x0000AF0F File Offset: 0x00009F0F
 		private void buttonCancel_Click(object sender, EventArgs e)
 		{
 			this._sValue = string.Empty;
@@ -79,7 +86,7 @@ namespace EchoAdmin
 		}
 
 		// Token: 0x17000001 RID: 1
-		// (get) Token: 0x06000009 RID: 9 RVA: 0x00002734 File Offset: 0x00001734
+		// (get) Token: 0x06000053 RID: 83 RVA: 0x0000AF34 File Offset: 0x00009F34
 		public int SelectRowIndex
 		{
 			get
@@ -89,7 +96,7 @@ namespace EchoAdmin
 		}
 
 		// Token: 0x17000002 RID: 2
-		// (get) Token: 0x0600000A RID: 10 RVA: 0x0000274C File Offset: 0x0000174C
+		// (get) Token: 0x06000054 RID: 84 RVA: 0x0000AF4C File Offset: 0x00009F4C
 		public string SelectMemberValue
 		{
 			get
@@ -99,7 +106,7 @@ namespace EchoAdmin
 		}
 
 		// Token: 0x17000003 RID: 3
-		// (get) Token: 0x0600000B RID: 11 RVA: 0x00002764 File Offset: 0x00001764
+		// (get) Token: 0x06000055 RID: 85 RVA: 0x0000AF64 File Offset: 0x00009F64
 		public int ValueMember
 		{
 			get
@@ -109,8 +116,8 @@ namespace EchoAdmin
 		}
 
 		// Token: 0x17000004 RID: 4
-		// (get) Token: 0x0600000D RID: 13 RVA: 0x00002788 File Offset: 0x00001788
-		// (set) Token: 0x0600000C RID: 12 RVA: 0x0000277C File Offset: 0x0000177C
+		// (get) Token: 0x06000056 RID: 86 RVA: 0x0000AF7C File Offset: 0x00009F7C
+		// (set) Token: 0x06000057 RID: 87 RVA: 0x0000AF94 File Offset: 0x00009F94
 		public string ColumnMember
 		{
 			get
@@ -123,28 +130,28 @@ namespace EchoAdmin
 			}
 		}
 
-		// Token: 0x04000006 RID: 6
+		// Token: 0x04000088 RID: 136
 		private DataSet _dsSearch = new DataSet();
 
-		// Token: 0x04000007 RID: 7
+		// Token: 0x04000089 RID: 137
 		private string _sdataMember = string.Empty;
 
-		// Token: 0x04000008 RID: 8
+		// Token: 0x0400008A RID: 138
 		private string _sheaderGridColumnText = string.Empty;
 
-		// Token: 0x04000009 RID: 9
+		// Token: 0x0400008B RID: 139
 		private string _sValue = string.Empty;
 
-		// Token: 0x0400000A RID: 10
+		// Token: 0x0400008C RID: 140
 		private int _iRow = -1;
 
-		// Token: 0x0400000B RID: 11
+		// Token: 0x0400008D RID: 141
 		private string _sTitle = string.Empty;
 
-		// Token: 0x0400000C RID: 12
+		// Token: 0x0400008E RID: 142
 		private int key_id = -1;
 
-		// Token: 0x0400000D RID: 13
+		// Token: 0x0400008F RID: 143
 		private string _columnMember = string.Empty;
 	}
 }

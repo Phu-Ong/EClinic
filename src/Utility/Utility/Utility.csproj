@@ -35,7 +35,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AMS.Profile">
-      <HintPath>..\..\..\EClinic_SA002\AMS.Profile.dll</HintPath>
+      <HintPath>C:\Users\PhuQuangNhatOng\Documents\Github\MyRepo\EClinic\SetupFile\AMS.Profile.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />

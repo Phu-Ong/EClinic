@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <profile>
   <section name="Common Configuration">
-    <entry name="Image Folder">C:\temp\</entry>
-    <entry name="Logo File">C:\temp\logo.jpg</entry>
+    <entry name="Image Folder">C:\Users\PhuQuangNhatOng\Documents\Github\MyRepo\EClinic\Images\</entry>
+    <entry name="Logo File">C:\Users\PhuQuangNhatOng\Documents\Github\MyRepo\EClinic\Images\logo.jpg</entry>
     <entry name="Init Passwd">yQe6VPukJU9M7kh/cNGKgA==</entry>
     <entry name="AutoCompleteTextBoxMode">OFF</entry>
     <entry name="CultureInfo">vi-VN</entry>
@@ -14,7 +14,7 @@
     <entry name="DistrictCode">51101</entry>
     <entry name="CountryID">291</entry>
     <entry name="Add-in Folder">Addins</entry>
-    <entry name="ReportsPath">D:\EClinic_SA002 - Test\Reports\</entry>
+    <entry name="ReportsPath">C:\Users\PhuQuangNhatOng\Documents\Github\MyRepo\EClinic\Reports\</entry>
     <entry name="PreMaYTe">701TL</entry>
   </section>
   <section name="EchoAdmin Params">

@@ -1,0 +1,26 @@
+YeuCauChiTiet_Id	Number
+MaYTe			String	20
+Ho_Ten			String	20
+Ho				String	20
+Ten				String	20
+Nam_Sinh		String	20
+GioiTinh		String	5
+Dia_Chi			String	200
+Quan_Huyen		String	200
+BenhNhan_Id		Number
+CLSKetQuaChiTiet_Id	Number
+YeuCauChiTiet_Id	Number
+TenDichVu			String	200
+BacSiChiDinh_Id		Number
+BSYeuCau			String	50
+NgayThucHien		DATETIME
+NoiThucHien_Id		Number
+BacSiThucHien_Id	Number
+BSThucHien			String	50
+ChanDoanLamSang		String	200
+MoTa				String	200
+Text_002			String	200
+Text_003			String	200
+KetLuan				String	200
+GhiChu				String	200
+image	BLOB
