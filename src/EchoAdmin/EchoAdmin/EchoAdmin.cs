@@ -54,7 +54,6 @@ namespace EchoAdmin
             // Scale factor để crop area fill toàn bộ control (cả width và height)
             float scaleFactorX = (float)this.captureMovie1.Width / cropWidth;
             float scaleFactorY = (float)this.captureMovie1.Height / cropHeight;
-            float scaleFactor = Math.Max(scaleFactorX, scaleFactorY); // Dùng max để đảm bảo fill toàn bộ
 
             // Tạo Panel wrapper để crop visual, nhưng Panel giữ nguyên kích thước design
             Control parent = this.captureMovie1.Parent;
