@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 
@@ -15,9 +16,27 @@ namespace Utility
 			byte[] result;
 			try
 			{
+				// Tạo bitmap mới với DPI cao (300 DPI) để đảm bảo chất lượng in tốt
+				Bitmap highDpiBitmap = new Bitmap(image.Width, image.Height, PixelFormat.Format32bppArgb);
+				highDpiBitmap.SetResolution(300f, 300f); // 300 DPI cho in ấn chất lượng cao
+				
+				using (Graphics g = Graphics.FromImage(highDpiBitmap))
+				{
+					g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+					g.SmoothingMode = SmoothingMode.HighQuality;
+					g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+					g.CompositingQuality = CompositingQuality.HighQuality;
+					g.CompositingMode = CompositingMode.SourceCopy;
+					g.DrawImage(image, 0, 0, image.Width, image.Height);
+				}
+
 				MemoryStream memoryStream = new MemoryStream();
-				image.Save(memoryStream, ImageFormat.Jpeg);
+				// Dùng PNG (lossless) thay vì JPEG để giữ chất lượng ảnh hoàn hảo
+				// PNG không mất chất lượng như JPEG, phù hợp cho in ấn y tế
+				highDpiBitmap.Save(memoryStream, ImageFormat.Png);
 				result = memoryStream.ToArray();
+				
+				highDpiBitmap.Dispose();
 			}
 			finally
 			{
@@ -35,9 +54,26 @@ namespace Utility
 			byte[] result;
 			using (Bitmap bitmap = new Bitmap(imagePath))
 			{
+				// Tạo bitmap mới với DPI cao (300 DPI) để đảm bảo chất lượng in tốt
+				Bitmap highDpiBitmap = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format32bppArgb);
+				highDpiBitmap.SetResolution(300f, 300f); // 300 DPI cho in ấn chất lượng cao
+				
+				using (Graphics g = Graphics.FromImage(highDpiBitmap))
+				{
+					g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+					g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+					g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+					g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+					g.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+					g.DrawImage(bitmap, 0, 0, bitmap.Width, bitmap.Height);
+				}
+
 				MemoryStream memoryStream = new MemoryStream();
-				bitmap.Save(memoryStream, ImageFormat.Jpeg);
+				// Dùng PNG (lossless) thay vì JPEG để giữ chất lượng ảnh hoàn hảo
+				highDpiBitmap.Save(memoryStream, ImageFormat.Png);
 				result = memoryStream.ToArray();
+				
+				highDpiBitmap.Dispose();
 			}
 			return result;
 		}
@@ -57,6 +93,42 @@ namespace Utility
 				File.Delete(path);
 			}
 			GeneralUtility.ArrayCaptureImagesPath.Clear();
+		}
+
+		// Helper method để lấy ImageCodecInfo cho format cụ thể
+		private static ImageCodecInfo GetEncoder(ImageFormat format)
+		{
+			ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
+			foreach (ImageCodecInfo codec in codecs)
+			{
+				if (codec.FormatID == format.Guid)
+				{
+					return codec;
+				}
+			}
+			return null;
+		}
+
+		// Save ảnh với PNG (lossless) và DPI cao để giữ chất lượng tối đa
+		public static void SaveImageWithHighQuality(Image image, string filePath)
+		{
+			// Tạo bitmap mới với DPI cao (300 DPI) để đảm bảo chất lượng in tốt
+			Bitmap highDpiBitmap = new Bitmap(image.Width, image.Height, PixelFormat.Format32bppArgb);
+			highDpiBitmap.SetResolution(300f, 300f); // 300 DPI cho in ấn chất lượng cao
+			
+			using (Graphics g = Graphics.FromImage(highDpiBitmap))
+			{
+				g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+				g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+				g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+				g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+				g.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+				g.DrawImage(image, 0, 0, image.Width, image.Height);
+			}
+
+			// Dùng PNG (lossless) thay vì JPEG để giữ chất lượng ảnh hoàn hảo
+			highDpiBitmap.Save(filePath, ImageFormat.Png);
+			highDpiBitmap.Dispose();
 		}
 
 		// Token: 0x04000008 RID: 8

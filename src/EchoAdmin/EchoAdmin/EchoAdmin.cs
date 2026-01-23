@@ -23,6 +23,9 @@ namespace EchoAdmin
         private float videoCropRightPercent = EClinicConfig.CropRight;
         private float videoCropTopPercent = EClinicConfig.CropTop;
         private float videoCropBottomPercent = EClinicConfig.CropBottom;
+
+        // Lưu ảnh gốc (sau crop nhưng chưa resize) để lưu vào database với chất lượng cao
+        private Dictionary<PictureBox, Bitmap> originalCroppedImages = new Dictionary<PictureBox, Bitmap>();
         // Token: 0x0600000F RID: 15 RVA: 0x00003E44 File Offset: 0x00002E44
         public EchoAdmin()
         {
@@ -296,10 +299,19 @@ namespace EchoAdmin
             cropArea.Width = Math.Min(cropArea.Width, originalImage.Width - cropArea.X);
             cropArea.Height = Math.Min(cropArea.Height, originalImage.Height - cropArea.Y);
 
-            Bitmap cropped = new Bitmap(cropArea.Width, cropArea.Height);
+            // Tạo bitmap với PixelFormat tốt và DPI cao để giữ chất lượng
+            Bitmap cropped = new Bitmap(cropArea.Width, cropArea.Height, PixelFormat.Format32bppArgb);
+            // Set DPI cao (300 DPI) để đảm bảo chất lượng in tốt
+            cropped.SetResolution(300f, 300f);
             using (Graphics g = Graphics.FromImage(cropped))
             {
+                // Tối ưu chất lượng rendering
                 g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.SmoothingMode = SmoothingMode.HighQuality;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.CompositingQuality = CompositingQuality.HighQuality;
+                g.CompositingMode = CompositingMode.SourceCopy;
+                
                 g.DrawImage(originalImage,
                     new Rectangle(0, 0, cropArea.Width, cropArea.Height),
                     cropArea,
@@ -340,7 +352,7 @@ namespace EchoAdmin
             return resized;
         }
 
-        // Resize ảnh giữ nguyên tỷ lệ để fit vào khung
+        // Resize ảnh giữ nguyên tỷ lệ để fit vào khung với chất lượng cao
         private Bitmap ResizeImageKeepAspectRatio(Bitmap originalImage, Size targetSize)
         {
             // Tính tỷ lệ scale để fit vào khung
@@ -351,16 +363,93 @@ namespace EchoAdmin
             int newWidth = (int)(originalImage.Width * ratio);
             int newHeight = (int)(originalImage.Height * ratio);
 
-            Bitmap resized = new Bitmap(newWidth, newHeight);
+            // Nếu resize quá nhỏ (scale < 0.5), dùng multi-step resize để giữ chất lượng tốt hơn
+            if (ratio < 0.5)
+            {
+                return ResizeImageMultiStep(originalImage, newWidth, newHeight);
+            }
+
+            // Tạo bitmap với PixelFormat tốt và DPI cao để giữ chất lượng
+            Bitmap resized = new Bitmap(newWidth, newHeight, PixelFormat.Format32bppArgb);
+            // Set DPI cao (300 DPI) để đảm bảo chất lượng in tốt
+            resized.SetResolution(300f, 300f);
             using (Graphics g = Graphics.FromImage(resized))
             {
+                // Tối ưu chất lượng rendering
                 g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                 g.SmoothingMode = SmoothingMode.HighQuality;
                 g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.CompositingQuality = CompositingQuality.HighQuality;
+                g.CompositingMode = CompositingMode.SourceCopy;
+                
                 g.DrawImage(originalImage, 0, 0, newWidth, newHeight);
             }
 
             return resized;
+        }
+
+        // Multi-step resize để giữ chất lượng tốt hơn khi scale nhỏ
+        private Bitmap ResizeImageMultiStep(Bitmap originalImage, int targetWidth, int targetHeight)
+        {
+            Bitmap current = originalImage;
+            int currentWidth = originalImage.Width;
+            int currentHeight = originalImage.Height;
+
+            // Resize từng bước, mỗi bước giảm tối đa 50%
+            while (currentWidth > targetWidth * 2 || currentHeight > targetHeight * 2)
+            {
+                int nextWidth = Math.Max(targetWidth, currentWidth / 2);
+                int nextHeight = Math.Max(targetHeight, currentHeight / 2);
+
+                Bitmap next = new Bitmap(nextWidth, nextHeight, PixelFormat.Format32bppArgb);
+                next.SetResolution(300f, 300f); // Set DPI cao
+                using (Graphics g = Graphics.FromImage(next))
+                {
+                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    g.SmoothingMode = SmoothingMode.HighQuality;
+                    g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                    g.CompositingQuality = CompositingQuality.HighQuality;
+                    g.CompositingMode = CompositingMode.SourceCopy;
+                    
+                    g.DrawImage(current, 0, 0, nextWidth, nextHeight);
+                }
+
+                // Dispose bitmap trung gian (trừ original)
+                if (current != originalImage)
+                {
+                    current.Dispose();
+                }
+
+                current = next;
+                currentWidth = nextWidth;
+                currentHeight = nextHeight;
+            }
+
+            // Bước cuối cùng: resize đến kích thước đích
+            if (currentWidth != targetWidth || currentHeight != targetHeight)
+            {
+                Bitmap final = new Bitmap(targetWidth, targetHeight, PixelFormat.Format32bppArgb);
+                final.SetResolution(300f, 300f); // Set DPI cao
+                using (Graphics g = Graphics.FromImage(final))
+                {
+                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    g.SmoothingMode = SmoothingMode.HighQuality;
+                    g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                    g.CompositingQuality = CompositingQuality.HighQuality;
+                    g.CompositingMode = CompositingMode.SourceCopy;
+                    
+                    g.DrawImage(current, 0, 0, targetWidth, targetHeight);
+                }
+
+                if (current != originalImage)
+                {
+                    current.Dispose();
+                }
+
+                return final;
+            }
+
+            return current;
         }
 
         // Crop cả 4 phía tự động dựa trên kích thước pictureBox
@@ -374,50 +463,136 @@ namespace EchoAdmin
                 , this.videoCropBottomPercent);
         }
 
+        // Crop ảnh nhưng KHÔNG resize - dùng để lưu ảnh gốc với chất lượng cao vào database
+        private Bitmap CropImageOnly(Bitmap originalImage,
+            float leftCropPercent, float rightCropPercent,
+            float topCropPercent, float bottomCropPercent)
+        {
+            int leftCrop = (int)(originalImage.Width * leftCropPercent);
+            int rightCrop = (int)(originalImage.Width * rightCropPercent);
+            int topCrop = (int)(originalImage.Height * topCropPercent);
+            int bottomCrop = (int)(originalImage.Height * bottomCropPercent);
+
+            Rectangle cropArea = new Rectangle(
+                leftCrop,
+                topCrop,
+                originalImage.Width - leftCrop - rightCrop,
+                originalImage.Height - topCrop - bottomCrop
+            );
+
+            return CropImage(originalImage, cropArea);
+        }
+
 
         // Token: 0x06000019 RID: 25 RVA: 0x000043C4 File Offset: 0x000033C4
         private void pictureBox1_Click(object sender, EventArgs e)
         {
             Bitmap originalImage = new Bitmap(this.captureMovie1.ImageVideoShot);
 
-            // Crop cả 4 phía với cùng crop percent như video display và fit vào pictureBox
-            Bitmap croppedImage = CropAndFitToPictureBox(originalImage, this.pictureBox1);
+            // Bước 1: Crop ảnh gốc (chưa resize) - lưu để save vào database với chất lượng cao
+            Bitmap croppedOriginal = CropImageOnly(originalImage
+                , this.videoCropLeftPercent
+                , this.videoCropRightPercent
+                , this.videoCropTopPercent
+                , this.videoCropBottomPercent);
+            
+            // Lưu ảnh gốc (sau crop) để dùng khi save vào database
+            if (originalCroppedImages.ContainsKey(this.pictureBox1))
+            {
+                originalCroppedImages[this.pictureBox1].Dispose();
+            }
+            originalCroppedImages[this.pictureBox1] = (Bitmap)croppedOriginal.Clone();
+
+            // Bước 2: Resize để hiển thị trong pictureBox
+            Bitmap croppedImage = ResizeImageKeepAspectRatio(croppedOriginal, this.pictureBox1.Size);
 
             this.pictureBox1.Image = croppedImage;
             this.checkBox1.Checked = true;
 
-            // Dispose original
+            // Dispose intermediate
             originalImage.Dispose();
+            croppedOriginal.Dispose();
         }
 
         // Token: 0x0600001A RID: 26 RVA: 0x00004400 File Offset: 0x00003400
         private void pictureBox2_Click(object sender, EventArgs e)
         {
             Bitmap originalImage = new Bitmap(this.captureMovie1.ImageVideoShot);
-            Bitmap croppedImage = CropAndFitToPictureBox(originalImage, this.pictureBox2);
+            
+            // Bước 1: Crop ảnh gốc (chưa resize) - lưu để save vào database với chất lượng cao
+            Bitmap croppedOriginal = CropImageOnly(originalImage
+                , this.videoCropLeftPercent
+                , this.videoCropRightPercent
+                , this.videoCropTopPercent
+                , this.videoCropBottomPercent);
+            
+            // Lưu ảnh gốc (sau crop) để dùng khi save vào database và in
+            if (originalCroppedImages.ContainsKey(this.pictureBox2))
+            {
+                originalCroppedImages[this.pictureBox2].Dispose();
+            }
+            originalCroppedImages[this.pictureBox2] = (Bitmap)croppedOriginal.Clone();
+
+            // Bước 2: Resize để hiển thị trong pictureBox
+            Bitmap croppedImage = ResizeImageKeepAspectRatio(croppedOriginal, this.pictureBox2.Size);
             this.pictureBox2.Image = croppedImage;
             this.checkBox2.Checked = true;
             originalImage.Dispose();
+            croppedOriginal.Dispose();
         }
 
         // Token: 0x0600001B RID: 27 RVA: 0x0000443C File Offset: 0x0000343C
         private void pictureBox3_Click(object sender, EventArgs e)
         {
             Bitmap originalImage = new Bitmap(this.captureMovie1.ImageVideoShot);
-            Bitmap croppedImage = CropAndFitToPictureBox(originalImage, this.pictureBox3);
+            
+            // Bước 1: Crop ảnh gốc (chưa resize) - lưu để save vào database với chất lượng cao
+            Bitmap croppedOriginal = CropImageOnly(originalImage
+                , this.videoCropLeftPercent
+                , this.videoCropRightPercent
+                , this.videoCropTopPercent
+                , this.videoCropBottomPercent);
+            
+            // Lưu ảnh gốc (sau crop) để dùng khi save vào database và in
+            if (originalCroppedImages.ContainsKey(this.pictureBox3))
+            {
+                originalCroppedImages[this.pictureBox3].Dispose();
+            }
+            originalCroppedImages[this.pictureBox3] = (Bitmap)croppedOriginal.Clone();
+
+            // Bước 2: Resize để hiển thị trong pictureBox
+            Bitmap croppedImage = ResizeImageKeepAspectRatio(croppedOriginal, this.pictureBox3.Size);
             this.pictureBox3.Image = croppedImage;
             this.checkBox3.Checked = true;
             originalImage.Dispose();
+            croppedOriginal.Dispose();
         }
 
         // Token: 0x0600001C RID: 28 RVA: 0x00004478 File Offset: 0x00003478
         private void pictureBox4_Click(object sender, EventArgs e)
         {
             Bitmap originalImage = new Bitmap(this.captureMovie1.ImageVideoShot);
-            Bitmap croppedImage = CropAndFitToPictureBox(originalImage, this.pictureBox4);
+            
+            // Bước 1: Crop ảnh gốc (chưa resize) - lưu để save vào database với chất lượng cao
+            Bitmap croppedOriginal = CropImageOnly(originalImage
+                , this.videoCropLeftPercent
+                , this.videoCropRightPercent
+                , this.videoCropTopPercent
+                , this.videoCropBottomPercent);
+            
+            // Lưu ảnh gốc (sau crop) để dùng khi save vào database và in
+            if (originalCroppedImages.ContainsKey(this.pictureBox4))
+            {
+                originalCroppedImages[this.pictureBox4].Dispose();
+            }
+            originalCroppedImages[this.pictureBox4] = (Bitmap)croppedOriginal.Clone();
+
+            // Bước 2: Resize để hiển thị trong pictureBox
+            Bitmap croppedImage = ResizeImageKeepAspectRatio(croppedOriginal, this.pictureBox4.Size);
             this.pictureBox4.Image = croppedImage;
             this.checkBox4.Checked = true;
             originalImage.Dispose();
+            croppedOriginal.Dispose();
         }
 
         // Token: 0x0600001D RID: 29 RVA: 0x000044B4 File Offset: 0x000034B4
@@ -429,28 +604,64 @@ namespace EchoAdmin
             if (@checked)
             {
                 text = Path.GetTempFileName();
-                this.pictureBox1.Image.Save(text, ImageFormat.Jpeg);
+                // Dùng ảnh gốc (sau crop nhưng chưa resize) để in với chất lượng cao
+                if (originalCroppedImages.ContainsKey(this.pictureBox1))
+                {
+                    GeneralUtility.SaveImageWithHighQuality(originalCroppedImages[this.pictureBox1], text);
+                }
+                else
+                {
+                    // Fallback: dùng ảnh đã resize nếu không có ảnh gốc
+                    GeneralUtility.SaveImageWithHighQuality(this.pictureBox1.Image, text);
+                }
                 GeneralUtility.ArrayCaptureImagesPath.Add(text);
             }
             bool checked2 = this.checkBox2.Checked;
             if (checked2)
             {
                 text = Path.GetTempFileName();
-                this.pictureBox2.Image.Save(text, ImageFormat.Jpeg);
+                // Dùng ảnh gốc (sau crop nhưng chưa resize) để in với chất lượng cao
+                if (originalCroppedImages.ContainsKey(this.pictureBox2))
+                {
+                    GeneralUtility.SaveImageWithHighQuality(originalCroppedImages[this.pictureBox2], text);
+                }
+                else
+                {
+                    // Fallback: dùng ảnh đã resize nếu không có ảnh gốc
+                    GeneralUtility.SaveImageWithHighQuality(this.pictureBox2.Image, text);
+                }
                 GeneralUtility.ArrayCaptureImagesPath.Add(text);
             }
             bool checked3 = this.checkBox3.Checked;
             if (checked3)
             {
                 text = Path.GetTempFileName();
-                this.pictureBox3.Image.Save(text, ImageFormat.Jpeg);
+                // Dùng ảnh gốc (sau crop nhưng chưa resize) để in với chất lượng cao
+                if (originalCroppedImages.ContainsKey(this.pictureBox3))
+                {
+                    GeneralUtility.SaveImageWithHighQuality(originalCroppedImages[this.pictureBox3], text);
+                }
+                else
+                {
+                    // Fallback: dùng ảnh đã resize nếu không có ảnh gốc
+                    GeneralUtility.SaveImageWithHighQuality(this.pictureBox3.Image, text);
+                }
                 GeneralUtility.ArrayCaptureImagesPath.Add(text);
             }
             bool checked4 = this.checkBox4.Checked;
             if (checked4)
             {
                 text = Path.GetTempFileName();
-                this.pictureBox4.Image.Save(text, ImageFormat.Jpeg);
+                // Dùng ảnh gốc (sau crop nhưng chưa resize) để in với chất lượng cao
+                if (originalCroppedImages.ContainsKey(this.pictureBox4))
+                {
+                    GeneralUtility.SaveImageWithHighQuality(originalCroppedImages[this.pictureBox4], text);
+                }
+                else
+                {
+                    // Fallback: dùng ảnh đã resize nếu không có ảnh gốc
+                    GeneralUtility.SaveImageWithHighQuality(this.pictureBox4.Image, text);
+                }
                 GeneralUtility.ArrayCaptureImagesPath.Add(text);
             }
             ReportDirectImage reportDirectImage = new ReportDirectImage();
@@ -602,22 +813,52 @@ namespace EchoAdmin
             bool @checked = this.checkBox1.Checked;
             if (@checked)
             {
-                GeneralUtility.ArrayCaptureImages.Add((Bitmap)this.pictureBox1.Image.Clone());
+                // Lưu ảnh gốc (sau crop nhưng chưa resize) để giữ chất lượng cao
+                if (originalCroppedImages.ContainsKey(this.pictureBox1))
+                {
+                    GeneralUtility.ArrayCaptureImages.Add((Bitmap)originalCroppedImages[this.pictureBox1].Clone());
+                }
+                else
+                {
+                    // Fallback: dùng ảnh đã resize nếu không có ảnh gốc
+                    GeneralUtility.ArrayCaptureImages.Add((Bitmap)this.pictureBox1.Image.Clone());
+                }
             }
             bool checked2 = this.checkBox2.Checked;
             if (checked2)
             {
-                GeneralUtility.ArrayCaptureImages.Add((Bitmap)this.pictureBox2.Image.Clone());
+                if (originalCroppedImages.ContainsKey(this.pictureBox2))
+                {
+                    GeneralUtility.ArrayCaptureImages.Add((Bitmap)originalCroppedImages[this.pictureBox2].Clone());
+                }
+                else
+                {
+                    GeneralUtility.ArrayCaptureImages.Add((Bitmap)this.pictureBox2.Image.Clone());
+                }
             }
             bool checked3 = this.checkBox3.Checked;
             if (checked3)
             {
-                GeneralUtility.ArrayCaptureImages.Add((Bitmap)this.pictureBox3.Image.Clone());
+                if (originalCroppedImages.ContainsKey(this.pictureBox3))
+                {
+                    GeneralUtility.ArrayCaptureImages.Add((Bitmap)originalCroppedImages[this.pictureBox3].Clone());
+                }
+                else
+                {
+                    GeneralUtility.ArrayCaptureImages.Add((Bitmap)this.pictureBox3.Image.Clone());
+                }
             }
             bool checked4 = this.checkBox4.Checked;
             if (checked4)
             {
-                GeneralUtility.ArrayCaptureImages.Add((Bitmap)this.pictureBox4.Image.Clone());
+                if (originalCroppedImages.ContainsKey(this.pictureBox4))
+                {
+                    GeneralUtility.ArrayCaptureImages.Add((Bitmap)originalCroppedImages[this.pictureBox4].Clone());
+                }
+                else
+                {
+                    GeneralUtility.ArrayCaptureImages.Add((Bitmap)this.pictureBox4.Image.Clone());
+                }
             }
             bool flag3 = !flag;
             if (flag3)
