@@ -209,6 +209,15 @@ namespace EchoAdmin
                 if (flag2)
                 {
                     this.boolLoadedCapture = true;
+                    
+                    // Clear originalCroppedImages khi bắt đầu siêu âm mới
+                    foreach (var kvp in originalCroppedImages)
+                    {
+                        if (kvp.Value != null)
+                            kvp.Value.Dispose();
+                    }
+                    originalCroppedImages.Clear();
+                    
                     this.SetTrangThaiNutLenh(EchoAdmin.ButtonStat.Progress);
                     this.labelSoPhieuYeuCau.Text = this.dataGridViewExt1.SelectedRows[0].Cells["SoPhieuYeuCau"].Value.ToString();
                     EClinicConfig.BenhNhanID = (int)this.dataGridViewExt1.SelectedRows[0].Cells["BenhNhan_Id"].Value;
@@ -986,6 +995,15 @@ namespace EchoAdmin
                 }
                 dataSet = EClinicDB.FillDataset("SELECT * FROM clsketqua_images HA WHERE HA.CLSKetQua_Id = '" + this.dataGridViewExt1.SelectedRows[0].Cells["CLSKetQua_Id"].Value.ToString() + "'");
                 this.aImagesId.Clear();
+                
+                // Clear originalCroppedImages vì đang load ảnh từ DB, không phải ảnh mới capture
+                foreach (var kvp in originalCroppedImages)
+                {
+                    if (kvp.Value != null)
+                        kvp.Value.Dispose();
+                }
+                originalCroppedImages.Clear();
+                
                 this.pictureBox1.Image = null;
                 this.checkBox1.Checked = false;
                 this.pictureBox2.Image = null;
