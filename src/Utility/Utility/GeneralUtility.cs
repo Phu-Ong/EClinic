@@ -40,10 +40,8 @@ namespace Utility
 			}
 			finally
 			{
-				if (image != null)
-				{
-					((IDisposable)image).Dispose();
-				}
+				// KHÔNG dispose input image ở đây vì caller vẫn có thể sử dụng
+				// Caller sẽ chịu trách nhiệm dispose input image khi không cần nữa
 			}
 			return result;
 		}

@@ -33,9 +33,32 @@ namespace EchoAdmin
             this.comboBoxPhongSieuAm.SelectedValueChanged += this.comboBoxPhongSieuAm_SelectedValueChanged;
             this.tabControl1.SelectedIndexChanged += this.tabControl1_SelectedIndexChanged;
             this.dataGridViewExt1.SelectionChanged += this.dataGridViewExt1_SelectionChanged;
+            
+            // Add FormClosing event để dispose resources
+            this.FormClosing += EchoAdmin_FormClosing;
 
             // Apply crop trực tiếp trên video display (giữ nguyên kích thước design)
             ApplyVideoCrop();
+        }
+
+        // Dispose resources khi form đóng
+        private void EchoAdmin_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // Safely dispose all images in originalCroppedImages
+            foreach (var kvp in originalCroppedImages)
+            {
+                try
+                {
+                    if (kvp.Value != null)
+                        kvp.Value.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    // Log but don't break the closing process
+                    System.Diagnostics.Debug.WriteLine($"Error disposing image: {ex.Message}");
+                }
+            }
+            originalCroppedImages.Clear();
         }
 
         // Crop trực tiếp trên video display của captureMovie1
@@ -213,8 +236,15 @@ namespace EchoAdmin
                     // Clear originalCroppedImages khi bắt đầu siêu âm mới
                     foreach (var kvp in originalCroppedImages)
                     {
-                        if (kvp.Value != null)
-                            kvp.Value.Dispose();
+                        try
+                        {
+                            if (kvp.Value != null)
+                                kvp.Value.Dispose();
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Error disposing image: {ex.Message}");
+                        }
                     }
                     originalCroppedImages.Clear();
                     
@@ -515,6 +545,11 @@ namespace EchoAdmin
             // Bước 2: Resize để hiển thị trong pictureBox
             Bitmap croppedImage = ResizeImageKeepAspectRatio(croppedOriginal, this.pictureBox1.Size);
 
+            // Dispose ảnh cũ trước khi set ảnh mới
+            if (this.pictureBox1.Image != null)
+            {
+                this.pictureBox1.Image.Dispose();
+            }
             this.pictureBox1.Image = croppedImage;
             this.checkBox1.Checked = true;
 
@@ -544,6 +579,12 @@ namespace EchoAdmin
 
             // Bước 2: Resize để hiển thị trong pictureBox
             Bitmap croppedImage = ResizeImageKeepAspectRatio(croppedOriginal, this.pictureBox2.Size);
+            
+            // Dispose ảnh cũ trước khi set ảnh mới
+            if (this.pictureBox2.Image != null)
+            {
+                this.pictureBox2.Image.Dispose();
+            }
             this.pictureBox2.Image = croppedImage;
             this.checkBox2.Checked = true;
             originalImage.Dispose();
@@ -571,6 +612,12 @@ namespace EchoAdmin
 
             // Bước 2: Resize để hiển thị trong pictureBox
             Bitmap croppedImage = ResizeImageKeepAspectRatio(croppedOriginal, this.pictureBox3.Size);
+            
+            // Dispose ảnh cũ trước khi set ảnh mới
+            if (this.pictureBox3.Image != null)
+            {
+                this.pictureBox3.Image.Dispose();
+            }
             this.pictureBox3.Image = croppedImage;
             this.checkBox3.Checked = true;
             originalImage.Dispose();
@@ -598,6 +645,12 @@ namespace EchoAdmin
 
             // Bước 2: Resize để hiển thị trong pictureBox
             Bitmap croppedImage = ResizeImageKeepAspectRatio(croppedOriginal, this.pictureBox4.Size);
+            
+            // Dispose ảnh cũ trước khi set ảnh mới
+            if (this.pictureBox4.Image != null)
+            {
+                this.pictureBox4.Image.Dispose();
+            }
             this.pictureBox4.Image = croppedImage;
             this.checkBox4.Checked = true;
             originalImage.Dispose();
@@ -999,17 +1052,29 @@ namespace EchoAdmin
                 // Clear originalCroppedImages vì đang load ảnh từ DB, không phải ảnh mới capture
                 foreach (var kvp in originalCroppedImages)
                 {
-                    if (kvp.Value != null)
-                        kvp.Value.Dispose();
+                    try
+                    {
+                        if (kvp.Value != null)
+                            kvp.Value.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error disposing image: {ex.Message}");
+                    }
                 }
                 originalCroppedImages.Clear();
                 
+                // Dispose ảnh cũ trước khi clear
+                if (this.pictureBox1.Image != null) { this.pictureBox1.Image.Dispose(); }
                 this.pictureBox1.Image = null;
                 this.checkBox1.Checked = false;
+                if (this.pictureBox2.Image != null) { this.pictureBox2.Image.Dispose(); }
                 this.pictureBox2.Image = null;
                 this.checkBox2.Checked = false;
+                if (this.pictureBox3.Image != null) { this.pictureBox3.Image.Dispose(); }
                 this.pictureBox3.Image = null;
                 this.checkBox3.Checked = false;
+                if (this.pictureBox4.Image != null) { this.pictureBox4.Image.Dispose(); }
                 this.pictureBox4.Image = null;
                 this.checkBox4.Checked = false;
                 for (int i = 0; i <= dataSet.Tables[0].Rows.Count - 1; i++)
